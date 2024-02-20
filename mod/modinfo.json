@@ -1,0 +1,10 @@
+﻿{
+	"id": "syhnne.SRSslugcat",
+	"name": "srs",
+	"version": "0.1.0",
+	"authors": "syhnne",
+	"description": "工作量变成原来的4倍了",
+	"requirements": [ "slime-cubed.slugbase" ],
+	"requirements_names": [ "SlugBase" ],
+	"tags": [ "Custom Slugcat" ]
+}
