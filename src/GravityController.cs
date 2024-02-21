@@ -51,22 +51,16 @@ public class GravityController : UpdatableAndDeletable
 
 
 
-    // 见过屎山代码吗，如果你没见过，现在你见过了
     public void Update(bool eu, bool isMyStory)
     {
-        // 这个房间我搞不定。SS_AI那里回头再单独写。。。
         if (!enabled || player.room.abstractRoom.name == "SS_E08" || !unlocked) return;
-        // 非本模组剧情下不能控制五卵石、腐化之地、仰望皓月地区重力。我不知道沉没巨构那边会不会有问题，先不管了（目移
         if (!isMyStory && (player.room.abstractRoom.name.StartsWith("SS") || player.room.abstractRoom.name.StartsWith("DM") || player.room.abstractRoom.name.StartsWith("RM"))) return;
 
-        // 哼哼啊啊啊啊啊啊啊啊
         if (player.room.abstractRoom.name == "SS_AI" || player.room.abstractRoom.name == "SS_A03")
         {
-            // 这个房间太特么难做了。。实不相瞒，写完我都不记得自己到底改了夺少东西
         }
         else if (player.room.roomSettings.GetEffect(RoomSettings.RoomEffect.Type.BrokenZeroG) != null)
         {
-            // TODO: 这个有的时候不好使 SS_D05
             if (gravityBonus != (int)Mathf.Round((1f - Mathf.InverseLerp(0f, 0.85f, 1f - player.room.gravity)) * 10f)
             && gravityBonus != (int)Mathf.Round(10f * 1f - player.room.gravity))
             {
@@ -75,8 +69,6 @@ public class GravityController : UpdatableAndDeletable
                 gravityBonus = (int)Mathf.Round((1f - Mathf.InverseLerp(0f, 0.85f, 1f - player.room.gravity)) * 10f);
             }
         }
-        // 这就是我不懂了，他这儿的effect amount还不是真正的重力，他加了个插值，他为什么要加，我真是一点也想不明白，这除了导致我修三个小时bug以外还有什么别的用处吗
-        // 但是他这重力效果和室内灯光还是绑定的，我既不能访问这个AntiGravity的实例，又不能直接把它删了，我真的谢
         else if (player.room.roomSettings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG) != null)
         {
             if (gravityBonus != (int)Mathf.Round((1f - Mathf.InverseLerp(0f, 0.85f, 1f - player.room.gravity)) * 10f))
@@ -94,7 +86,6 @@ public class GravityController : UpdatableAndDeletable
         }
 
 
-        // 防止玩家在一些奇怪的体态下控制重力，由于我锁了y输入，这个限制大幅放宽了
         if (player.Consious && !player.dead && player.stun == 0
             && Input.GetKey(Plugin.instance.option.GravityControlKey.Value)
             && player.animation != Player.AnimationIndex.ZeroGPoleGrab)
@@ -119,7 +110,6 @@ public class GravityController : UpdatableAndDeletable
                     if (player.room.roomSettings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG) != null || player.room.roomSettings.GetEffect(RoomSettings.RoomEffect.Type.BrokenZeroG) != null || player.room.abstractRoom.name == "SS_AI")
                     {
                         Plugin.LogStat("HAS GRAVITY EFFECT");
-                        // 如果有类似效果，由于我猜这两效果不能大于1，所以还得钳制范围
                         if (gravityBonus <= 10)
                         {
                             if (player.room.abstractRoom.name == "SS_AI") { }

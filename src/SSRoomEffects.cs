@@ -143,45 +143,45 @@ internal class SSRoomEffects
     private static void AbstractRoom_RealizeRoom(On.AbstractRoom.orig_RealizeRoom orig, AbstractRoom self, World world, RainWorldGame game)
     {
         orig(self, world, game);
-        if (self.realizedRoom == null) { return; }
-        if (game.IsStorySession && game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName)
+        if (self.realizedRoom == null || !game.IsStorySession || game.GetStorySession.saveStateNumber != Plugin.SlugcatStatsName) { return; }
+
+
+        RoomSettings settings = self.realizedRoom.roomSettings;
+
+        settings.RemoveEffect(RoomSettings.RoomEffect.Type.SSMusic);
+        settings.RemoveEffect(RoomSettings.RoomEffect.Type.ProjectedScanLines);
+        settings.RemoveEffect(RoomSettings.RoomEffect.Type.SuperStructureProjector);
+        settings.RemoveEffect(RoomSettings.RoomEffect.Type.SSSwarmers);
+
+
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_IND-Turbine.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_IND-Deep50hz.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Escape.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Omnidirectional, "AM_IND-SuperStructure.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans2.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataStream.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data4.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data5.ogg");
+
+        /*foreach (AmbientSound sound in settings.ambientSounds)
         {
-            RoomSettings settings = self.realizedRoom.roomSettings;
-
-            settings.RemoveEffect(RoomSettings.RoomEffect.Type.SSMusic);
-            settings.RemoveEffect(RoomSettings.RoomEffect.Type.ProjectedScanLines);
-            settings.RemoveEffect(RoomSettings.RoomEffect.Type.SuperStructureProjector);
-            settings.RemoveEffect(RoomSettings.RoomEffect.Type.SSSwarmers);
-
-
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_IND-Turbine.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_IND-Deep50hz.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Escape.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Omnidirectional, "AM_IND-SuperStructure.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans2.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataStream.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data4.ogg");
-            settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data5.ogg");
-            
-            /*foreach (AmbientSound sound in settings.ambientSounds)
+            Plugin.Log("room:", self.name, "ambientSound:", sound.type.ToString(), sound.sample);
+        }*/
+        if (self.name == "SS_AI")
+        {
+            settings.RemoveEffect(RoomSettings.RoomEffect.Type.ZeroG);
+            if (settings.GetEffect(RoomSettings.RoomEffect.Type.DarkenLights) == null)
             {
-                Plugin.Log("room:", self.name, "ambientSound:", sound.type.ToString(), sound.sample);
-            }*/
-            if (self.name == "SS_AI")
+                settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.DarkenLights, 0.2f, false));
+            }
+            if (settings.GetEffect(RoomSettings.RoomEffect.Type.Darkness) == null)
             {
-                if (settings.GetEffect(RoomSettings.RoomEffect.Type.DarkenLights) == null)
-                {
-                    settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.DarkenLights, 0.2f, false));
-                }
-                if (settings.GetEffect(RoomSettings.RoomEffect.Type.Darkness) == null)
-                {
-                    settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.Darkness, 0.1f, false));
-                }
-                if (settings.GetEffect(RoomSettings.RoomEffect.Type.Contrast) == null)
-                {
-                    settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.Contrast, 0.1f, false));
-                }
+                settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.Darkness, 0.1f, false));
+            }
+            if (settings.GetEffect(RoomSettings.RoomEffect.Type.Contrast) == null)
+            {
+                settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.Contrast, 0.1f, false));
             }
         }
     }

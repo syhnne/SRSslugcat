@@ -51,6 +51,7 @@ class Plugin : BaseUnityPlugin
     internal static readonly bool ShowLogs = true;
     public Options option;
     public static bool DevMode = true;
+    internal static readonly Color spearColor = new Color(1f, 0.2f, 0.1f);
 
 
 
@@ -63,15 +64,15 @@ class Plugin : BaseUnityPlugin
             option = new Options();
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
             PlayerHooks.Apply();
+            CustomPlayerGraphics.Apply();
             SSRoomEffects.Apply();
             
             On.Player.Update += Player_Update;
             On.Player.ctor += Player_ctor;
-            
-            
 
 
-            
+
+
 
 
         }
@@ -85,8 +86,24 @@ class Plugin : BaseUnityPlugin
 
     private void LoadResources(RainWorld rainWorld)
     {
-        MachineConnector.SetRegisteredOI("syhnne.cateratorstemplate", this.option);
-        Plugin.Log("INIT");
+       
+        try
+        {
+            MachineConnector.SetRegisteredOI("syhnne.cateratorstemplate", this.option);
+
+            bool isInit = IsInit;
+            if (!isInit)
+            {
+                LogStat("INIT");
+                IsInit = true;
+                // Futile.atlasManager.LogAllElementNames();
+            }
+        }
+        catch (Exception ex)
+        {
+            base.Logger.LogError(ex);
+            throw;
+        }
     }
 
 
@@ -168,19 +185,6 @@ class Plugin : BaseUnityPlugin
         orig(self, eu);
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

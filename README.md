@@ -1,6 +1,9 @@
-Use this template on GitHub or [download the code](https://github.com/SlimeCubed/ExampleSlugBaseMod/archive/refs/heads/master.zip), whichever is easiest.
 
-Links:
-- [Template Walkthrough](https://slimecubed.github.io/slugbase/articles/template.html) for a guide to this template.
-- [SlugBase Docs](https://slimecubed.github.io/slugbase/) for information regarding custom slugcats.
-- [Modding Wiki](https://rainworldmodding.miraheze.org/wiki/Downpour_Reference/Mod_Directories) for `modinfo.json` documentation.
+看来隔壁todolist上的添加dms支持在这里以一种奇怪的方式实现了，一会进行一个代码的复制粘贴
+
+那么问题来了，如何去掉slugbase在你的猫名字前面加的那个The
+
+不完整的特性列表（其实是我没活了，有没有人帮我想想技能）：
+- 可以像矛大师一样拔矛扎东西吃
+- 拔出的矛有两种模式，如果玩家不是饥饿状态，那么拔出的矛可以秒杀击中的生物（打到蜥蜴头部之类的地方不算）你可以通过观察矛的颜色来判断这个功能是否在生效
+- 可以吃东西，但食性和白猫相同，且只给四分之一饱食度（其实蝠蝇可以加二分之一饱食度，因为你可以先扎后吃）

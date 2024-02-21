@@ -47,44 +47,6 @@ internal class PlayerHooks
 {
 
 
-
-    internal static void Apply()
-    {
-        On.HUD.HUD.InitSinglePlayerHud += HUD_InitSinglePlayerHud;
-        IL.Player.GrabUpdate += Player_GrabUpdate;
-        On.Player.Destroy += Player_Destroy;
-        On.Player.Die += Player_Die;
-        On.Player.CanBeSwallowed += Player_CanBeSwallowed;
-        On.Player.ObjectCountsAsFood += Player_ObjectCountsAsFood;
-        On.Player.NewRoom += Player_NewRoom;
-        On.Player.Jump += Player_Jump;
-        On.Player.MovementUpdate += Player_MovementUpdate;
-
-        new Hook(
-            typeof(SSOracleSwarmer).GetProperty(nameof(SSOracleSwarmer.Edible), BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
-            SSOracleSwarmer_Edible
-            );
-
-        new Hook(
-            typeof(SLOracleSwarmer).GetProperty(nameof(SLOracleSwarmer.Edible), BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
-            SLOracleSwarmer_Edible
-            );
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public class PlayerModule
     {
         public readonly WeakReference<Player> playerRef;
@@ -106,7 +68,7 @@ internal class PlayerHooks
 
             if (playerName == Plugin.SlugcatStatsName && storyName != null)
             {
-                Plugin.Log("gravity controller added");
+                Plugin.LogStat("gravity controller added");
                 gravityController = new GravityController(player);
             }
 
@@ -127,6 +89,272 @@ internal class PlayerHooks
 
 
 
+
+
+
+
+
+    internal static void Apply()
+    {
+        On.HUD.HUD.InitSinglePlayerHud += HUD_InitSinglePlayerHud;
+        IL.Player.GrabUpdate += Player_GrabUpdate;
+        On.Player.Destroy += Player_Destroy;
+        On.Player.Die += Player_Die;
+        On.Player.CanBeSwallowed += Player_CanBeSwallowed;
+        On.Player.ObjectCountsAsFood += Player_ObjectCountsAsFood;
+        On.Player.NewRoom += Player_NewRoom;
+        On.Player.Jump += Player_Jump;
+        On.Player.MovementUpdate += Player_MovementUpdate;
+
+        On.Player.ClassMechanicsSpearmaster += Player_ClassMechanicsSpearmaster;
+        On.Player.Grabability += Player_Grabability;
+        On.Spear.Spear_NeedleCanFeed += Spear_NeedleCanFeed;
+        On.Spear.HitSomething += Spear_HitSomething;
+        On.Spear.DrawSprites += Spear_DrawSprites;
+        On.PlayerGraphics.TailSpeckles.setSpearProgress += TailSpeckles_setSpearProgress;
+        
+
+
+
+        new Hook(
+            typeof(SSOracleSwarmer).GetProperty(nameof(SSOracleSwarmer.Edible), BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
+            SSOracleSwarmer_Edible
+            );
+
+        new Hook(
+            typeof(SLOracleSwarmer).GetProperty(nameof(SLOracleSwarmer.Edible), BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
+            SLOracleSwarmer_Edible
+            );
+    }
+
+
+
+
+    private static void TailSpeckles_setSpearProgress(On.PlayerGraphics.TailSpeckles.orig_setSpearProgress orig, PlayerGraphics.TailSpeckles self, float p)
+    {
+        if (self.pGraphics.player.slugcatStats.name == Plugin.SlugcatStatsName && !self.pGraphics.player.Malnourished)
+        {
+            self.spearType = 4;
+            self.spearProg = Mathf.Clamp(p, 0f, 1f);
+        }
+        else { orig(self, p); }
+    }
+
+
+
+    private static void Spear_DrawSprites(On.Spear.orig_DrawSprites orig, Spear self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+    {
+        orig(self, sLeaser, rCam, timeStacker, camPos);
+        if (self.IsNeedle && self.spearmasterNeedleType == 4)
+        {
+            float num = (float)self.spearmasterNeedle_fadecounter / (float)self.spearmasterNeedle_fadecounter_max;
+            if (self.spearmasterNeedle_hasConnection)
+            {
+                num = 1f;
+            }
+            if (num < 0.01f)
+            {
+                num = 0.01f;
+            }
+            if (ModManager.CoopAvailable && self.jollyCustomColor != null)
+            {
+                sLeaser.sprites[0].color = self.jollyCustomColor.Value;
+            }
+            else if (PlayerGraphics.CustomColorsEnabled())
+            {
+                sLeaser.sprites[0].color = Color.Lerp(PlayerGraphics.CustomColorSafety(2), self.color, 1f - num);
+            }
+            else
+            {
+                sLeaser.sprites[0].color = Color.Lerp(Plugin.spearColor, self.color, 1f - num);
+            }
+        }
+    }
+
+
+
+
+    private static bool Spear_HitSomething(On.Spear.orig_HitSomething orig, Spear self, SharedPhysics.CollisionResult result, bool eu)
+    {
+        bool die = false;
+        if (result.obj != null && result.obj is Creature && !(result.obj as Creature).dead
+            && self.thrownBy is Player && (self.thrownBy as Player).slugcatStats.name == Plugin.SlugcatStatsName && !(self.thrownBy as Player).Malnourished && self.Spear_NeedleCanFeed() && (result.obj as Creature).SpearStick(self, Mathf.Lerp(0.55f, 0.62f, Random.value), result.chunk, result.onAppendagePos, self.firstChunk.vel))
+        {
+            die = true;
+        }
+
+        bool res = orig(self, result, eu);
+        if (die)
+        {
+            Plugin.Log("creature instant death:", (result.obj as Creature).GetType().ToString());
+            /*(result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass * 2f), result.chunk, result.onAppendagePos, Creature.DamageType.Stab, 99f, 20f);*/
+            (result.obj as Creature).Die();
+            (result.obj as Creature).SetKillTag(self.thrownBy.abstractCreature);
+        }
+        return res;
+    }
+
+
+
+
+
+
+
+
+
+    private static bool Spear_NeedleCanFeed(On.Spear.orig_Spear_NeedleCanFeed orig, Spear self)
+    {
+        if (self.thrownBy != null && self.thrownBy is Player && (self.thrownBy as Player).slugcatStats.name == Plugin.SlugcatStatsName && self.spearmasterNeedle && self.spearmasterNeedle_hasConnection)
+        {
+            return true;
+        }
+        return orig(self);
+    }
+
+    
+
+
+
+
+    private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
+    {
+        if (self.slugcatStats.name == Plugin.SlugcatStatsName && obj is Weapon)
+        {
+            return Player.ObjectGrabability.OneHand;
+        }
+        else { return orig(self, obj); }
+    }
+
+
+
+
+
+
+
+
+    // 挂这里不是因为需要挂这里，而是因为这个比较好认（？
+    private static void Player_ClassMechanicsSpearmaster(On.Player.orig_ClassMechanicsSpearmaster orig, Player self)
+    {
+        orig(self);
+        if (self.slugcatStats.name != Plugin.SlugcatStatsName) return;
+
+
+        if ((self.graphicsModule as PlayerGraphics).tailSpecks == null) 
+        {
+            Plugin.Log("ERROR: tailSpecks not found");
+            return;
+        }
+
+        // 20
+        if (!self.input[0].pckp || self.input[0].y != 1)
+        {
+            PlayerGraphics.TailSpeckles tailSpecks = (self.graphicsModule as PlayerGraphics).tailSpecks;
+            if (tailSpecks.spearProg > 0f)
+            {
+                tailSpecks.setSpearProgress(Mathf.Lerp(tailSpecks.spearProg, 0f, 0.05f));
+                if (tailSpecks.spearProg < 0.025f)
+                {
+                    tailSpecks.setSpearProgress(0f);
+                }
+            }
+            else
+            {
+                self.smSpearSoundReady = false;
+            }
+        }
+
+        // 100
+        int num5 = -1;
+        for (int i = 0; i < 2; i++) 
+        {
+            if (self.grasps[i] != null && self.grasps[i].grabbed is IPlayerEdible && (self.grasps[i].grabbed as IPlayerEdible).Edible)
+            {
+                num5 = i;
+            }
+        }
+
+        // 174 需要按住拾取和上键
+        if ((self.grasps[0] == null || self.grasps[1] == null) && num5 == -1 && self.input[0].y == 1)
+        {
+            
+            PlayerGraphics.TailSpeckles tailSpecks = (self.graphicsModule as PlayerGraphics).tailSpecks;
+            if (tailSpecks.spearProg == 0f)
+            {
+                tailSpecks.newSpearSlot();
+            }
+            if (tailSpecks.spearProg < 0.1f)
+            {
+                tailSpecks.setSpearProgress(Mathf.Lerp(tailSpecks.spearProg, 0.11f, 0.1f));
+            }
+            else
+            {
+                self.Blink(5);
+                if (!self.smSpearSoundReady)
+                {
+                    self.smSpearSoundReady = true;
+                    self.room.PlaySound(MoreSlugcatsEnums.MSCSoundID.SM_Spear_Pull, 0f, 1f, 1f + Random.value * 0.5f);
+                }
+                tailSpecks.setSpearProgress(Mathf.Lerp(tailSpecks.spearProg, 1f, 0.05f));
+            }
+            if (tailSpecks.spearProg > 0.6f)
+            {
+                (self.graphicsModule as PlayerGraphics).head.vel += Custom.RNV() * ((tailSpecks.spearProg - 0.6f) / 0.4f) * 2f;
+            }
+            if (tailSpecks.spearProg > 0.95f)
+            {
+                tailSpecks.setSpearProgress(1f);
+            }
+            if (tailSpecks.spearProg == 1f)
+            {
+                self.room.PlaySound(MoreSlugcatsEnums.MSCSoundID.SM_Spear_Grab, 0f, 1f, 0.5f + Random.value * 1.5f);
+                self.smSpearSoundReady = false;
+                Vector2 pos = (self.graphicsModule as PlayerGraphics).tail[(int)((float)(self.graphicsModule as PlayerGraphics).tail.Length / 2f)].pos;
+                for (int j = 0; j < 4; j++)
+                {
+                    Vector2 vector = Custom.DirVec(pos, self.bodyChunks[1].pos);
+                    self.room.AddObject(new WaterDrip(pos + Custom.RNV() * Random.value * 1.5f, Custom.RNV() * 3f * Random.value + vector * Mathf.Lerp(2f, 6f, Random.value), false));
+                }
+                for (int k = 0; k < 5; k++)
+                {
+                    Vector2 vector2 = Custom.RNV();
+                    self.room.AddObject(new Spark(pos + vector2 * Random.value * 40f, vector2 * Mathf.Lerp(4f, 30f, Random.value), Color.white, null, 4, 18));
+                }
+                int spearType = tailSpecks.spearType;
+                tailSpecks.setSpearProgress(0f);
+                AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.room.GetWorldCoordinate(self.mainBodyChunk.pos), self.room.game.GetNewID(), false);
+                self.room.abstractRoom.AddEntity(abstractSpear);
+                abstractSpear.pos = self.abstractCreature.pos;
+                abstractSpear.RealizeInRoom();
+                Vector2 vector3 = self.bodyChunks[0].pos;
+                Vector2 vector4 = Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos);
+                if (Mathf.Abs(self.bodyChunks[0].pos.y - self.bodyChunks[1].pos.y) > Mathf.Abs(self.bodyChunks[0].pos.x - self.bodyChunks[1].pos.x) && self.bodyChunks[0].pos.y > self.bodyChunks[1].pos.y)
+                {
+                    vector3 += Custom.DirVec(self.bodyChunks[1].pos, self.bodyChunks[0].pos) * 5f;
+                    vector4 *= -1f;
+                    vector4.x += 0.4f * (float)self.flipDirection;
+                    vector4.Normalize();
+                }
+                abstractSpear.realizedObject.firstChunk.HardSetPosition(vector3);
+                abstractSpear.realizedObject.firstChunk.vel = Vector2.ClampMagnitude((vector4 * 2f + Custom.RNV() * Random.value) / abstractSpear.realizedObject.firstChunk.mass, 6f);
+                if (self.FreeHand() > -1)
+                {
+                    self.SlugcatGrab(abstractSpear.realizedObject, self.FreeHand());
+                }
+                if (abstractSpear.type == AbstractPhysicalObject.AbstractObjectType.Spear)
+                {
+                    (abstractSpear.realizedObject as Spear).Spear_makeNeedle(spearType, true);
+                    if ((self.graphicsModule as PlayerGraphics).useJollyColor)
+                    {
+                        (abstractSpear.realizedObject as Spear).jollyCustomColor = new Color?(PlayerGraphics.JollyColor(self.playerState.playerNumber, 2));
+                    }
+                }
+                self.wantToThrow = 0;
+            }
+        }
+
+
+
+    }
 
 
 
@@ -166,7 +394,7 @@ internal class PlayerHooks
             bool getModule = Plugin.playerModules.TryGetValue((self.owner as Player), out var module) && module.playerName == Plugin.SlugcatStatsName;
             if (getModule)
             {
-                Plugin.Log("HUD add part");
+                Plugin.LogStat("HUD gravityMeter");
                 self.AddPart(new GravityMeter(self, self.fContainers[1], module.gravityController));
             }
 
@@ -183,7 +411,7 @@ internal class PlayerHooks
         orig(self);
         if (self.slugcatStats.name == Plugin.SlugcatStatsName)
         {
-            self.jumpBoost *= 1.4f;
+            self.jumpBoost *= 1.1f;
         }
     }
 
@@ -301,6 +529,63 @@ internal class PlayerHooks
 
             });
         }
+
+        /*// 119
+        // 我是矛大师，让我拔矛
+        // 没事了，我突然想起来其实我完全可以另起一个函数（（
+        ILCursor c2 = new(il);
+        if (c2.TryGotoNext(MoveType.After,
+            (i) => i.Match(OpCodes.Ldarg_0),
+            (i) => i.MatchLdfld<Player>("SlugCatClass"),
+            (i) => i.MatchLdsfld<MoreSlugcats.MoreSlugcatsEnums.SlugcatStatsName>("Spear"),
+            (i) => i.Match(OpCodes.Call)
+            ))
+        {
+            Plugin.Log("grab update c2 match");
+            *//*c2.Emit(OpCodes.Ldarg_0);
+            c2.Emit(OpCodes.Ldloc, 13);
+            c2.EmitDelegate<Func<bool, Player, int, bool>>((edible, self, grasp) =>
+            {
+                if (self.slugcatStats.name == Plugin.SlugcatStatsName)
+                {
+                    bool isNotOracleSwarmer = self.grasps[grasp].grabbed is not OracleSwarmer;
+                    return (edible && isNotOracleSwarmer);
+                }
+                else
+                {
+                    return edible;
+                }
+
+            });*//*
+        }*/
+
+        /*ILCursor c3 = new ILCursor(il);
+        // 337末尾，修改神经元的可食用性
+        if (c3.TryGotoNext(MoveType.After,
+            (i) => i.MatchCall<Creature>("get_grasps"),
+            (i) => i.Match(OpCodes.Ldloc_S),
+            (i) => i.Match(OpCodes.Ldelem_Ref),
+            (i) => i.Match(OpCodes.Ldfld),
+            (i) => i.Match(OpCodes.Isinst),
+            (i) => i.Match(OpCodes.Callvirt)
+            ))
+        {
+            c3.Emit(OpCodes.Ldarg_0);
+            c3.Emit(OpCodes.Ldloc, 13);
+            c3.EmitDelegate<Func<bool, Player, int, bool>>((edible, self, grasp) =>
+            {
+                if (self.slugcatStats.name == Plugin.SlugcatStatsName)
+                {
+                    bool isNotOracleSwarmer = self.grasps[grasp].grabbed is not OracleSwarmer;
+                    return (edible && isNotOracleSwarmer);
+                }
+                else
+                {
+                    return edible;
+                }
+
+            });
+        }*/
 
     }
 
