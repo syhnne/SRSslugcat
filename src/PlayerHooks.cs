@@ -65,8 +65,9 @@ internal class PlayerHooks
             }
             else { storyName = null; }
 
-
-            if (playerName == Plugin.SlugcatStatsName && storyName != null)
+            // 太好玩了。等我把4个全都搓出来，这里需要3条判定（
+            // 其实有空的话，最好把这个东西绑到别的地方去……但我真的懒得重构代码……
+            if (playerName == Plugin.SlugcatStatsName && storyName != null && storyName.value != "PebblesSlug")
             {
                 Plugin.LogStat("gravity controller added");
                 gravityController = new GravityController(player);
@@ -77,7 +78,7 @@ internal class PlayerHooks
 
         public void Update(Player player, bool eu)
         {
-            if (player.room == null) return;
+            if (player.room == null || player.dead) return;
             gravityController?.Update(eu, storyName == playerName);
         }
 
@@ -129,12 +130,18 @@ internal class PlayerHooks
 
 
 
+    
 
+
+
+
+    // 借用speartype标记拔出的矛的类型。源代码这个数字不会超过3，而且使用的时候是取的他的余数，所以我可以随便往上加
+    // 
     private static void TailSpeckles_setSpearProgress(On.PlayerGraphics.TailSpeckles.orig_setSpearProgress orig, PlayerGraphics.TailSpeckles self, float p)
     {
         if (self.pGraphics.player.slugcatStats.name == Plugin.SlugcatStatsName && !self.pGraphics.player.Malnourished)
         {
-            self.spearType = 4;
+            self.spearType = Random.Range(4, 7);
             self.spearProg = Mathf.Clamp(p, 0f, 1f);
         }
         else { orig(self, p); }
@@ -142,10 +149,12 @@ internal class PlayerHooks
 
 
 
+
+
     private static void Spear_DrawSprites(On.Spear.orig_DrawSprites orig, Spear self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
     {
         orig(self, sLeaser, rCam, timeStacker, camPos);
-        if (self.IsNeedle && self.spearmasterNeedleType == 4)
+        if (self.IsNeedle && self.spearmasterNeedleType > 3)
         {
             float num = (float)self.spearmasterNeedle_fadecounter / (float)self.spearmasterNeedle_fadecounter_max;
             if (self.spearmasterNeedle_hasConnection)
@@ -174,11 +183,15 @@ internal class PlayerHooks
 
 
 
+
+    // 使被击中的生物当场去世
     private static bool Spear_HitSomething(On.Spear.orig_HitSomething orig, Spear self, SharedPhysics.CollisionResult result, bool eu)
     {
         bool die = false;
         if (result.obj != null && result.obj is Creature && !(result.obj as Creature).dead
-            && self.thrownBy is Player && (self.thrownBy as Player).slugcatStats.name == Plugin.SlugcatStatsName && !(self.thrownBy as Player).Malnourished && self.Spear_NeedleCanFeed() && (result.obj as Creature).SpearStick(self, Mathf.Lerp(0.55f, 0.62f, Random.value), result.chunk, result.onAppendagePos, self.firstChunk.vel))
+            && self.thrownBy is Player && (self.thrownBy as Player).slugcatStats.name == Plugin.SlugcatStatsName
+            && self.Spear_NeedleCanFeed() && self.spearmasterNeedleType > 3
+            && (result.obj as Creature).SpearStick(self, Mathf.Lerp(0.55f, 0.62f, Random.value), result.chunk, result.onAppendagePos, self.firstChunk.vel))
         {
             die = true;
         }
@@ -187,8 +200,8 @@ internal class PlayerHooks
         if (die)
         {
             Plugin.Log("creature instant death:", (result.obj as Creature).GetType().ToString());
-            /*(result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass * 2f), result.chunk, result.onAppendagePos, Creature.DamageType.Stab, 99f, 20f);*/
-            (result.obj as Creature).Die();
+            (result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass * 2f), result.chunk, result.onAppendagePos, Creature.DamageType.Stab, 99f, 20f);
+            // (result.obj as Creature).Die();
             (result.obj as Creature).SetKillTag(self.thrownBy.abstractCreature);
         }
         return res;
@@ -215,7 +228,7 @@ internal class PlayerHooks
 
 
 
-
+    // 双持
     private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
     {
         if (self.slugcatStats.name == Plugin.SlugcatStatsName && obj is Weapon)

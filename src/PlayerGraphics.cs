@@ -56,6 +56,7 @@ internal class CustomPlayerGraphics
         On.PlayerGraphics.AddToContainer += AddToContainer;
         On.PlayerGraphics.DrawSprites += DrawSprites;
         On.PlayerGraphics.TailSpeckles.DrawSprites += TailSpecks_DrawSprites;
+        On.PlayerGraphics.ApplyPalette += ApplyPalette;
 
         On.PlayerGraphics.ColoredBodyPartList += ColoredBodyPartList;
         On.PlayerGraphics.DefaultBodyPartColorHex += DefaultBodyPartColorHex;
@@ -69,9 +70,31 @@ internal class CustomPlayerGraphics
 
 
 
+    private static void ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+    {
+        orig(self, sLeaser, rCam, palette);
+        if (self.player.slugcatStats.name == Plugin.SlugcatStatsName)
+        {
+            for (int i = 0; i < 12; i++)
+            {
+                if (Plugin.ColoredBodyParts.Contains(i))
+                {
+                    Plugin.Log("colored:", i);
+                    sLeaser.sprites[i].color = new Color(1f, 1f, 1f);
+                }
+                else
+                {
+                    Plugin.Log("--:", i);
+                    sLeaser.sprites[i].color = Plugin.bodyColor;
+                }
+            }
+        }
+    }
 
 
-    
+
+
+
 
     private static List<string> DefaultBodyPartColorHex(On.PlayerGraphics.orig_DefaultBodyPartColorHex orig, SlugcatStats.Name slugcatID)
     {
@@ -122,20 +145,21 @@ internal class CustomPlayerGraphics
             self.tailSpecks = new PlayerGraphics.TailSpeckles(self, ModManager.MSC? 13 : 12);
 
             // 这个数据回头再改（
-            /*if (self.player.playerState.isPup)
+            if (self.player.playerState.isPup)
             {
-                self.tail[0] = new TailSegment(self, 8f, 2f, null, 0.85f, 1f, 1f, true);
-                self.tail[1] = new TailSegment(self, 6f, 3.5f, self.tail[0], 0.85f, 1f, 0.5f, true);
+                self.tail[0] = new TailSegment(self, 7f, 2f, null, 0.85f, 1f, 1f, true);
+                self.tail[1] = new TailSegment(self, 5f, 3.5f, self.tail[0], 0.85f, 1f, 0.5f, true);
                 self.tail[2] = new TailSegment(self, 4f, 3.5f, self.tail[1], 0.85f, 1f, 0.5f, true);
                 self.tail[3] = new TailSegment(self, 2f, 3.5f, self.tail[2], 0.85f, 1f, 0.5f, true);
             }
             else
             {
-                self.tail[0] = new TailSegment(self, 8f, 4f, null, 0.85f, 1f, 1f, true);
+                self.tail[0] = new TailSegment(self, 7f, 4f, null, 0.85f, 1f, 1f, true);
                 self.tail[1] = new TailSegment(self, 6f, 7f, self.tail[0], 0.85f, 1f, 0.5f, true);
                 self.tail[2] = new TailSegment(self, 4f, 7f, self.tail[1], 0.85f, 1f, 0.5f, true);
                 self.tail[3] = new TailSegment(self, 2f, 7f, self.tail[2], 0.85f, 1f, 0.5f, true);
-            }*/
+                self.tail.Append(new TailSegment(self, 1.5f, 5f, self.tail[3], 0.85f, 1f, 0.5f, true));
+            }
 
 
         }
@@ -193,9 +217,9 @@ internal class CustomPlayerGraphics
             new TriangleMesh.Triangle(10, 11, 12),
             new TriangleMesh.Triangle(11, 12, 13)
             };
-            TriangleMesh triangleMesh = new TriangleMesh("Futile_White", tris, false, false);
+            TriangleMesh triangleMesh = new TriangleMesh("srs_tail", tris, false, false);
             sLeaser.sprites[2] = triangleMesh;
-            sLeaser.sprites[3] = new FSprite("HeadA0", true);
+            sLeaser.sprites[3] = new FSprite("srs_HeadA0", true);
             sLeaser.sprites[4] = new FSprite("LegsA0", true);
             sLeaser.sprites[4].anchorY = 0.25f;
             sLeaser.sprites[5] = new FSprite("PlayerArm0", true);
@@ -214,24 +238,10 @@ internal class CustomPlayerGraphics
 
             self.tailSpecks.InitiateSprites(sLeaser, rCam);
             self.gown.InitiateSprite(self.gownIndex, sLeaser, rCam);
-            // Plugin.Log("gownindex:", self.gownIndex);
 
             // 太烧脑了，我终于懂了，0-11是原版sprite，12是msc加的那个gown，13开始才是我需要的
-            // 但你为什么还是卡bug啊（恼
 
-            /*for (int i = 0; i < sLeaser.sprites.Length; i++)
-            {
-                if (i == self.gownIndex && sLeaser.sprites[i] == null)
-                {
-                    Plugin.Log("sprites", i, "gown");
-                    continue;
-                }
-                else if (sLeaser.sprites[i] == null)
-                {
-                    Plugin.Log("sprites", i, "null");
-                    sLeaser.sprites[i] = new FSprite();
-                }
-            }*/
+
             self.AddToContainer(sLeaser, rCam, null);
         }
 
@@ -317,7 +327,19 @@ internal class CustomPlayerGraphics
         if (self.player.slugcatStats.name == Plugin.SlugcatStatsName && self.tailSpecks != null)
         {
             self.tailSpecks.DrawSprites(sLeaser, rCam, timeStacker, camPos);
+            for (int i = 0; i < sLeaser.sprites.Length; i++)
+            {
+                if (sLeaser.sprites[i].element.name.StartsWith(sLeaser.sprites[i].element.name))
+                {
+                    if (Futile.atlasManager.DoesContainElementWithName("srs_" + sLeaser.sprites[i].element.name))
+                    {
+                        sLeaser.sprites[i].element = Futile.atlasManager.GetElementWithName(sLeaser.sprites[i].element.name.Replace(sLeaser.sprites[i].element.name, "srs_" + sLeaser.sprites[i].element.name));
+                    }
+
+                }
+            }
         }
+        
     }
 
 

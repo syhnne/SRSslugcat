@@ -168,9 +168,20 @@ internal class SSRoomEffects
         {
             Plugin.Log("room:", self.name, "ambientSound:", sound.type.ToString(), sound.sample);
         }*/
+        if (self.name.StartsWith("SS"))
+        {
+            if (settings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG) != null)
+            {
+                settings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG).amount = 0.9f;
+            }
+            if (settings.GetEffect(RoomSettings.RoomEffect.Type.BrokenZeroG) != null)
+            {
+                settings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG).amount = 0f;
+            }
+        }
+
         if (self.name == "SS_AI")
         {
-            settings.RemoveEffect(RoomSettings.RoomEffect.Type.ZeroG);
             if (settings.GetEffect(RoomSettings.RoomEffect.Type.DarkenLights) == null)
             {
                 settings.effects.Add(new RoomSettings.RoomEffect(RoomSettings.RoomEffect.Type.DarkenLights, 0.2f, false));

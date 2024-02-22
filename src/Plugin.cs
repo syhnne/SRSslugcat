@@ -52,7 +52,8 @@ class Plugin : BaseUnityPlugin
     public Options option;
     public static bool DevMode = true;
     internal static readonly Color spearColor = new Color(1f, 0.2f, 0.1f);
-
+    internal static readonly Color32 bodyColor = new Color32(255, 207, 88, 255);
+    internal static readonly List<int> ColoredBodyParts = new List<int>() { 2, 3, };
 
 
 
@@ -89,13 +90,16 @@ class Plugin : BaseUnityPlugin
        
         try
         {
-            MachineConnector.SetRegisteredOI("syhnne.cateratorstemplate", this.option);
+            MachineConnector.SetRegisteredOI("syhnne.SRSslugcat", this.option);
 
             bool isInit = IsInit;
             if (!isInit)
             {
                 LogStat("INIT");
                 IsInit = true;
+                // Futile.atlasManager.LoadAtlas("atlases/headset");
+                Futile.atlasManager.LoadAtlas("atlases/head");
+                Futile.atlasManager.LoadAtlas("atlases/tail");
                 // Futile.atlasManager.LogAllElementNames();
             }
         }
@@ -183,11 +187,37 @@ class Plugin : BaseUnityPlugin
         bool getModule = playerModules.TryGetValue(self, out var module) && module.playerName == SlugcatStatsName;
         if (getModule) module.Update(self, eu);
         orig(self, eu);
+        
+        if (self.slugcatStats.name != SlugcatStatsName || self.room == null || self.dead) { return; }
+        if (self.Submersion > 0.2f)
+        {
+            WaterDeath(self, self.room);
+        }
+        if (self.room.game.globalRain != null && self.room.game.globalRain.Intensity > 0.2f)
+        {
+            WaterDeath(self, self.room);
+        }
 
     }
 
 
 
+
+
+
+
+    // 不知道咋写，先凑合一下（
+    // 啊啊啊啊啊啊啊啊啊啊啊啊啊我的耳朵！！
+    // 嗷 原来是他被调用好几次（
+    internal void WaterDeath(Player player, Room room)
+    {
+        if (player.dead) { return; }
+        Vector2 vector = Vector2.Lerp(player.firstChunk.pos, player.firstChunk.lastPos, 0.35f);
+        room.PlaySound(SoundID.Firecracker_Burn, vector);
+        room.ScreenMovement(new Vector2?(vector), default(Vector2), 1.3f);
+        room.InGameNoise(new InGameNoise(vector, 8000f, player, 1f));
+        player.Die();
+    }
 
 
 
