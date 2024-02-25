@@ -40,10 +40,10 @@ public class GravityController : UpdatableAndDeletable
     {
         this.player = player;
         unlocked = (player.room.game.session is StoryGameSession && player.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName && player.room.game.GetStorySession.saveState.deathPersistentSaveData.ascended) || Plugin.DevMode;
-        if (player.room != null && player.room.abstractRoom.name == "SS_AI" && player.room.game.GetStorySession.saveState.deathPersistentSaveData.altEnding)
+        /*if (player.room != null && player.room.abstractRoom.name == "SS_AI" && player.room.game.GetStorySession.saveState.deathPersistentSaveData.altEnding)
         {
             gravityBonus = 0;
-        }
+        }*/
 
     }
 

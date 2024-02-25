@@ -136,7 +136,6 @@ internal class PlayerHooks
 
 
     // 借用speartype标记拔出的矛的类型。源代码这个数字不会超过3，而且使用的时候是取的他的余数，所以我可以随便往上加
-    // 
     private static void TailSpeckles_setSpearProgress(On.PlayerGraphics.TailSpeckles.orig_setSpearProgress orig, PlayerGraphics.TailSpeckles self, float p)
     {
         if (self.pGraphics.player.slugcatStats.name == Plugin.SlugcatStatsName && !self.pGraphics.player.Malnourished)
@@ -201,8 +200,9 @@ internal class PlayerHooks
         {
             Plugin.Log("creature instant death:", (result.obj as Creature).GetType().ToString());
             (result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass * 2f), result.chunk, result.onAppendagePos, Creature.DamageType.Stab, 99f, 20f);
-            // (result.obj as Creature).Die();
-            (result.obj as Creature).SetKillTag(self.thrownBy.abstractCreature);
+
+            /*(result.obj as Creature).Die();
+            (result.obj as Creature).SetKillTag(self.thrownBy.abstractCreature);*/
         }
         return res;
     }

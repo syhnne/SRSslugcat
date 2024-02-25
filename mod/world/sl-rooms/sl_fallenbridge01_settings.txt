@@ -1,0 +1,4 @@
+EffectColorA: 21
+Effects: GreenSparks-0.1314651-281.3636-202.7556, Darkness-0.1086956-276-258, 
+PlacedObjects: DeadSeedCob><293.9494><246.9098><, SeedCob><377.1302><251.9658><0~0~7~10, DeadSeedCob><580.4558><188.9598><, ReliableSpear><1007.238><56.12478><, 
+FadePalette: 6, 1, 0.7501248, 0.502661, 0.2551973, 0

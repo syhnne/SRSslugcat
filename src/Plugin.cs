@@ -187,16 +187,20 @@ class Plugin : BaseUnityPlugin
         bool getModule = playerModules.TryGetValue(self, out var module) && module.playerName == SlugcatStatsName;
         if (getModule) module.Update(self, eu);
         orig(self, eu);
-        
-        if (self.slugcatStats.name != SlugcatStatsName || self.room == null || self.dead) { return; }
-        if (self.Submersion > 0.2f)
+
+
+        if (self.room == null || self.dead || self.slugcatStats.name != SlugcatStatsName) return;
+        bool isMyStory = self.room.game.IsStorySession && self.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName;
+
+        if (!self.Malnourished && self.Submersion > 0.2f)
         {
             WaterDeath(self, self.room);
         }
-        if (self.room.game.globalRain != null && self.room.game.globalRain.Intensity > 0.2f)
+        // 啊这，下面这个先不要了，我发现即便我在避难所里了也能死掉
+        /*if (self.room.game.globalRain != null && self.room.game.globalRain.Intensity > 0.2f)
         {
             WaterDeath(self, self.room);
-        }
+        }*/
 
     }
 
@@ -212,6 +216,7 @@ class Plugin : BaseUnityPlugin
     internal void WaterDeath(Player player, Room room)
     {
         if (player.dead) { return; }
+        Plugin.Log("waterdeath");
         Vector2 vector = Vector2.Lerp(player.firstChunk.pos, player.firstChunk.lastPos, 0.35f);
         room.PlaySound(SoundID.Firecracker_Burn, vector);
         room.ScreenMovement(new Vector2?(vector), default(Vector2), 1.3f);

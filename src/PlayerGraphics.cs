@@ -79,12 +79,10 @@ internal class CustomPlayerGraphics
             {
                 if (Plugin.ColoredBodyParts.Contains(i))
                 {
-                    Plugin.Log("colored:", i);
                     sLeaser.sprites[i].color = new Color(1f, 1f, 1f);
                 }
                 else
                 {
-                    Plugin.Log("--:", i);
                     sLeaser.sprites[i].color = Plugin.bodyColor;
                 }
             }
