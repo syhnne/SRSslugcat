@@ -6,5 +6,5 @@ SecondWaveAmplitude: 0
 Clouds: 0.4891304
 Palette: 13
 EffectColorA: 6
-Effects: Fog-0.2934783-20-20, Darkness-0.08695652--1000--1000, Flies-0.1086956-37-125, 
-PlacedObjects: DeadSeedCob><211.6143><190.6031><, 
+Effects: Fog-0.2934783-20-20, Darkness-0.08695652-0-0, Flies-0.1086956-37-125, 
+PlacedObjects: DeadSeedCob><211.6143><190.6031><, NoLeviathanStrandingZone><962.8588><35.06523><62~372, 
