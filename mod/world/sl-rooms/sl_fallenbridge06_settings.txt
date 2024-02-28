@@ -1,0 +1,2 @@
+WaveAmplitude: 0.2934783
+SecondWaveAmplitude: 0.3478261
