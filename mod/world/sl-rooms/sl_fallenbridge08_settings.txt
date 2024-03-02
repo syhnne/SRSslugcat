@@ -1,0 +1,5 @@
+WaveAmplitude: 0.2276608
+SecondWaveAmplitude: 0.3478261
+EffectColorA: 6
+Effects: WaterDepth-0.06959899-303.8719-255.3778, 
+FadePalette: 27, 0.3015966, 0.5026608, 0.5026608

@@ -71,8 +71,7 @@ class Plugin : BaseUnityPlugin
             On.Player.Update += Player_Update;
             On.Player.ctor += Player_ctor;
 
-            // On.AbstractCreatureAI.RandomMoveToOtherRoom += AbstractCreatureAI_RandomMoveToOtherRoom;
-
+            On.World.GetNode += World_GetNode;
 
 
 
@@ -162,12 +161,14 @@ class Plugin : BaseUnityPlugin
 
 
 
-    // 这玩意儿老报错，我耳朵要炸了，先拿这个掩盖一下
-    // 他妈的，为什么啊，我耳朵要聋了真的
-    private void AbstractCreatureAI_RandomMoveToOtherRoom(On.AbstractCreatureAI.orig_RandomMoveToOtherRoom orig, AbstractCreatureAI self, int maxRoamDistance)
+    private AbstractRoomNode World_GetNode(On.World.orig_GetNode orig, World self, WorldCoordinate c)
     {
-        try { orig(self, maxRoamDistance); }
-        catch (Exception ex) { Plugin.Logger.LogError(ex); }
+        Plugin.Log("GetNode - room nodes:", self.GetAbstractRoom(c.room).nodes.Length, "abstractnode:", c.abstractNode);
+        if (c.abstractNode > self.GetAbstractRoom(c.room).nodes.Length || c.abstractNode < 0)
+        {
+            Plugin.Log("!!!!!!!!");
+        }
+        return orig(self, c);
     }
 
 
