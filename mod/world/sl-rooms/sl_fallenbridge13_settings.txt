@@ -6,4 +6,5 @@ Palette: 13
 EffectColorA: 6
 EffectColorB: 0
 Effects: WaterDepth-0.07608695-257-228, SunBlock-1-328-315, Darkness-0.3043478-441-400, 
+PlacedObjects: VoidSpawnEgg><595.3312><628.861><0~0~2~6~1, VoidSpawnEgg><744.2736><628.097><0~0~2~6~1, 
 FadePalette: 27, 0.2608696

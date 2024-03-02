@@ -1,0 +1,6 @@
+DangerType: FloodAndRain
+Clouds: 0
+Grime: 0.2680027
+WaterReflectionAlpha: 0
+Effects: Darkness-0.5026607-271.1448-207.1135, 
+FadePalette: 27, 0.603193, 0.6031929

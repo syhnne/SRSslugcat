@@ -8,5 +8,5 @@ Palette: 13
 EffectColorA: 6
 EffectColorB: 6
 Effects: Fog-0.5-20-20, Darkness-0.06521739-28-67, BorderPushBack-1-197-132, 
-PlacedObjects: Filter><331.0545><269.5421><0~100~0~0~, 
+PlacedObjects: InsectGroup><274.1682><325.6055><33.43852~158.3396~0~0~TinyDragonFly~0.2989363, 
 FadePalette: 5, 0.1413043, 0.1413043, 0.1413043

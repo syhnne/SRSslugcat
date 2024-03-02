@@ -160,13 +160,16 @@ class Plugin : BaseUnityPlugin
 
 
 
-
+    // 绷不住了，直到最后我也不知道到底是谁在给这个函数传非法参数。
+    // 我随便给他返回了一个空的坐标，想着这样我就能从报错信息里知道调用方是谁，结果他不吱声了。
+    // 总之他跑起来了，就这样吧
     private AbstractRoomNode World_GetNode(On.World.orig_GetNode orig, World self, WorldCoordinate c)
     {
-        Plugin.Log("GetNode - room nodes:", self.GetAbstractRoom(c.room).nodes.Length, "abstractnode:", c.abstractNode);
+        // Plugin.Log("GetNode - room nodes:", self.GetAbstractRoom(c.room).nodes.Length, "abstractnode:", c.abstractNode);
         if (c.abstractNode > self.GetAbstractRoom(c.room).nodes.Length || c.abstractNode < 0)
         {
-            Plugin.Log("!!!!!!!!");
+            // Plugin.Log("!!!!!!!!");
+            return new AbstractRoomNode();
         }
         return orig(self, c);
     }

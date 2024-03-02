@@ -1,0 +1,8 @@
+Press G and up&down arrow keys to adjust the gravity in room.|按住G键和上下键来调整房间的重力
+Gravity control key|重力控制按键
+The key to be pressed when controlling gravity|调整房间重力时需要按住的键
+Gravity control toggle|启用重力控制
+(WIP)The key to toggle gravity control|(WIP)在游戏中启用和关闭重力控制的键
+Options|其他选项
+Gravity Control|重力控制选项
+Fallen Bridge|断桥
