@@ -67,9 +67,14 @@ class Plugin : BaseUnityPlugin
             PlayerHooks.Apply();
             CustomPlayerGraphics.Apply();
             SSRoomEffects.Apply();
-            
+            SLOracleHooks.Apply();
+            OxygenMaskModules.Apply();
+
+
             On.Player.Update += Player_Update;
             On.Player.ctor += Player_ctor;
+            On.Player.LungUpdate += Player_LungUpdate;
+            On.Player.IsObjectThrowable += Player_IsObjectThrowable;
 
             On.World.GetNode += World_GetNode;
 
@@ -196,14 +201,18 @@ class Plugin : BaseUnityPlugin
     private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
     {
         bool getModule = playerModules.TryGetValue(self, out var module) && module.playerName == SlugcatStatsName;
-        if (getModule) module.Update(self, eu);
+
+        if (getModule) 
+        { 
+            module.Update(self, eu);
+        }
         orig(self, eu);
 
 
-        if (self.room == null || self.dead || self.slugcatStats.name != SlugcatStatsName) return;
+        if (self.room == null || self.dead || !getModule || self.slugcatStats.name != Plugin.SlugcatStatsName) return;
         bool isMyStory = self.room.game.IsStorySession && self.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName;
 
-        if (!self.Malnourished && self.Submersion > 0.2f)
+        if (!self.Malnourished && self.Submersion > 0.2f && self.room.abstractRoom.name != "SB_L01")
         {
             WaterDeath(self, self.room);
         }
@@ -227,6 +236,16 @@ class Plugin : BaseUnityPlugin
     internal void WaterDeath(Player player, Room room)
     {
         if (player.dead) { return; }
+        for (int i = 0; i < player.grasps.Length; i++)
+        {
+            if (player.grasps[i] != null && player.grasps[i].grabbed is OxygenMaskModules.OxygenMask)
+            {
+                return;
+            }
+        }
+        // 咋说，这玩意儿应该不能被放在肚子里，这很奇怪（
+        if (player.objectInStomach is OxygenMaskModules.OxygenMaskAbstract) { return; }
+
         Plugin.Log("waterdeath");
         Vector2 vector = Vector2.Lerp(player.firstChunk.pos, player.firstChunk.lastPos, 0.35f);
         room.PlaySound(SoundID.Firecracker_Burn, vector);
@@ -237,4 +256,51 @@ class Plugin : BaseUnityPlugin
 
 
 
+
+
+
+    #region OxygenMask
+
+    private void Player_LungUpdate(On.Player.orig_LungUpdate orig, Player self)
+    {
+        bool haveOxygenMask = false;
+        OxygenMaskModules.OxygenMask mask = null;
+        for (int i = 0; i < self.grasps.Length; i++)
+        {
+            if (self.grasps[i] != null && self.grasps[i].grabbed is OxygenMaskModules.OxygenMask)
+            {
+                haveOxygenMask = true; 
+                mask = self.grasps[i].grabbed as OxygenMaskModules.OxygenMask;
+                break;
+            }
+        }
+        if (haveOxygenMask && mask != null && mask.count != 1)
+        {
+            // 没错，按照整数倍提高肺活量的最好办法就是——抽帧！
+            // 现在fp也可以拥有比肩水猫的肺活量了，我还是把这个数改小一点罢
+        }
+        else { orig(self); }
+
+    }
+
+
+
+    // 防止氧气面罩被扔出去（虽然fisobs貌似附带了类似的功能，但他不好使啊（汗
+    private bool Player_IsObjectThrowable(On.Player.orig_IsObjectThrowable orig, Player self, PhysicalObject obj)
+    {
+        if (obj is OxygenMaskModules.OxygenMask)
+        {
+            return false;
+        }
+        return orig(self, obj);
+    }
+
+    #endregion
+
+
+
+
+
+
+    // TODO: 修复一下用fp玩剧情模式，ssai会有零重力的bug。我怀疑是两个模组在一起发生了化学反应
 }

@@ -26,6 +26,8 @@ using System.Reflection;
 using SlugBase.SaveData;
 using SlugBase;
 using static SRSslugcat.PlayerHooks;
+using System.Diagnostics.Eventing.Reader;
+using System.Drawing.Imaging;
 
 
 
@@ -80,6 +82,7 @@ internal class PlayerHooks
         {
             if (player.room == null || player.dead) return;
             gravityController?.Update(eu, storyName == playerName);
+       
         }
 
     }
@@ -106,6 +109,7 @@ internal class PlayerHooks
         On.Player.NewRoom += Player_NewRoom;
         On.Player.Jump += Player_Jump;
         On.Player.MovementUpdate += Player_MovementUpdate;
+        On.Player.CanIPickThisUp += Player_CanIPickThisUp;
 
         On.Player.ClassMechanicsSpearmaster += Player_ClassMechanicsSpearmaster;
         On.Player.Grabability += Player_Grabability;
@@ -130,7 +134,18 @@ internal class PlayerHooks
 
 
 
+    // 只是为了避免写一些对话而已。实际上好像并不能避免，我防不住雨鹿请联机队友替自己吃神经元（
+    private static bool Player_CanIPickThisUp(On.Player.orig_CanIPickThisUp orig, Player self, PhysicalObject obj)
+    {
+        if (self.slugcatStats.name == Plugin.SlugcatStatsName && obj is SLOracleSwarmer)
+        {
+            return false;
+        }
+        return orig(self, obj);
+    }
+
     
+
 
 
 

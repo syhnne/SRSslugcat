@@ -1,0 +1,10 @@
+Template: NONE
+DangerType: None
+CeilingDrips: 0
+Clouds: 0
+Grime: 0
+BkgDroneVolume: 0
+RandomItemDensity: 0
+Palette: 25
+Effects: SunBlock-1-14-118, ZeroG-0.9-18-57, DarkenLights-0-0-0, Darkness-0-377.7844-151.5406, Contrast-0.1082658-288.1407-33.43855, 
+AmbientSounds: OMNI><AM_WIN-StrongWnd2.ogg><649.244><654.55><0.3695652><1, OMNI><SO_SFX-DataTrans2.ogg><828.8108><578.3148><0.2608696><0.8434783, 

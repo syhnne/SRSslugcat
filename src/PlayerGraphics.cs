@@ -252,6 +252,7 @@ internal class CustomPlayerGraphics
 
 
     // TODO: 目前这个会导致看不到tailSpecks。正合我意，不用修造矛过程的bug了（逃
+    // 我的建议是等有空的时候直接重写一个类似的东西（。
     private static void AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
     {
         orig(self, sLeaser, rCam, newContatiner);

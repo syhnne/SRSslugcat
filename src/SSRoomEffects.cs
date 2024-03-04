@@ -20,7 +20,10 @@ namespace SRSslugcat;
 
 
 
-
+/// <summary>
+/// 牛逼，这段代码实际上没啥用，我还是得手动删掉大部分roomeffects，而且我要手动把设置文件名上的大写字母替换为小写字母他才会生效
+/// 很难不流汗
+/// </summary>
 
 internal class SSRoomEffects
 
@@ -37,6 +40,8 @@ internal class SSRoomEffects
         On.SSLightRod.Update += SSLightRod_Update;
         On.Room.Loaded += Room_Loaded;
         On.SSOracleBehavior.UnconciousUpdate += SSOracleBehavior_UnconciousUpdate;
+        On.Oracle.SetUpMarbles += Oracle_SetUpMarbles;
+        // On.Oracle.ctor += Oracle_ctor;
 
 
 
@@ -65,11 +70,48 @@ internal class SSRoomEffects
 
 
 
+    private static void Oracle_ctor(On.Oracle.orig_ctor orig, Oracle self, AbstractPhysicalObject abstractPhysicalObject, Room room)
+    {
+        if (room.game.IsStorySession && room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName && room.abstractRoom.name == "SS_AI")
+        {
+            return;
+        }
+        orig(self, abstractPhysicalObject, room);
+    }
+
+
+
+    private static void Oracle_SetUpMarbles(On.Oracle.orig_SetUpMarbles orig, Oracle self)
+    {
+        if (self.room.game.IsStorySession && self.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName)
+        {
+            return;
+        }
+        orig(self);
+    }
+
+
+
+
+
     private static void SSOracleBehavior_ctor(On.SSOracleBehavior.orig_ctor orig, SSOracleBehavior self, Oracle oracle)
     {
         orig(self, oracle);
         if (oracle.room.game.session is not StoryGameSession || oracle.room.game.GetStorySession.saveState.saveStateNumber != Plugin.SlugcatStatsName) return;
         self.movementBehavior = SSOracleBehavior.MovementBehavior.Meditate;
+        // 写在这不会有问题吧（汗
+        // 貌似会有问题，还是写个roomspecificscript保险
+        /*var abstr = new OxygenMaskModules.OxygenMaskAbstract(oracle.room.game.world, new WorldCoordinate(oracle.room.abstractRoom.index, -1, -1, 0), oracle.room.game.GetNewID());
+        self.oracle.room.abstractRoom.AddEntity(abstr);
+        self.oracle.room.AddObject(new OxygenMaskModules.OxygenMask(abstr));
+        Plugin.Log("OXYGEN MASK test");
+        foreach (var obj in oracle.room.physicalObjects)
+        {
+            foreach (var obj2 in obj)
+            {
+                Plugin.Log("physicalObj:", obj2.GetType().Name);
+            }
+        }*/
     }
 
 
@@ -161,6 +203,9 @@ internal class SSRoomEffects
         settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans.ogg");
         settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataTrans2.ogg");
         settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-DataStream.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data2.ogg");
+        settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data3.ogg");
         settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data4.ogg");
         settings.RemoveAmbientSound(AmbientSound.Type.Spot, "SO_SFX-Data5.ogg");
 
@@ -176,7 +221,7 @@ internal class SSRoomEffects
             }
             if (settings.GetEffect(RoomSettings.RoomEffect.Type.BrokenZeroG) != null)
             {
-                settings.GetEffect(RoomSettings.RoomEffect.Type.ZeroG).amount = 0f;
+                settings.GetEffect(RoomSettings.RoomEffect.Type.BrokenZeroG).amount = 0f;
             }
         }
 
