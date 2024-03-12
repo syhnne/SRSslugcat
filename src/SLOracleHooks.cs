@@ -9,6 +9,11 @@ namespace SRSslugcat;
 
 internal class SLOracleHooks
 {
+
+    public static void Disable()
+    {
+        On.SLOracleBehaviorHasMark.MoonConversation.AddEvents -= MoonConversation_AddEvents;
+    }
     public static void Apply()
     {
         On.SLOracleBehaviorHasMark.MoonConversation.AddEvents += MoonConversation_AddEvents;
@@ -21,7 +26,7 @@ internal class SLOracleHooks
     {
         if (self.myBehavior.oracle.room.game.IsStorySession && self.myBehavior.oracle.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName)
         {
-            Plugin.Log("moonRevived:", self.myBehavior.oracle.room.game.GetStorySession.saveState.miscWorldSaveData.moonRevived);
+            //Plugin.Log("moonRevived:", self.myBehavior.oracle.room.game.GetStorySession.saveState.miscWorldSaveData.moonRevived);
             Plugin.Log("moon conversation:", self.id.ToString(), self.State.neuronsLeft.ToString());
 
             if (self.id == Conversation.ID.MoonFirstPostMarkConversation)

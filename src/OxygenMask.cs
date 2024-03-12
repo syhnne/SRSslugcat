@@ -10,18 +10,57 @@ namespace SRSslugcat;
 
 
 /// 光看名字想必不会有人想到这东西是用来防止玩家在水下暴毙的罢
-/// 
+/// TODO: 修复在避难所休眠后这东西奇妙消失的bug
 /// 
 
-internal static class OxygenMaskModules
+internal class OxygenMaskModules
 {
     public static SLOracleBehaviorHasMark.MiscItemType OxygenMaskMisc = new("OxygenMask", false);
 
+    public static void Disable()
+    {
+        On.AbstractPhysicalObject.UsesAPersistantTracker -= AbstractPhysicalObject_UsesAPersistantTracker;
+        // On.MoreSlugcats.MSCRoomSpecificScript.AddRoomSpecificScript -= MSCRoomSpecificScript_AddRoomSpecificScript;
+        On.Room.Loaded -= Room_Loaded;
+        On.SaveState.SpawnSavedObjectsAndCreatures -= SaveState_SpawnSavedObjectsAndCreatures;
+        On.SaveState.SaveToString -= SaveState_SaveToString;
+    }
     public static void Apply()
     {
         On.AbstractPhysicalObject.UsesAPersistantTracker += AbstractPhysicalObject_UsesAPersistantTracker;
-        On.MoreSlugcats.MSCRoomSpecificScript.AddRoomSpecificScript += MSCRoomSpecificScript_AddRoomSpecificScript;
+        // On.MoreSlugcats.MSCRoomSpecificScript.AddRoomSpecificScript += MSCRoomSpecificScript_AddRoomSpecificScript;
+        On.Room.Loaded += Room_Loaded;
+        On.SaveState.SpawnSavedObjectsAndCreatures += SaveState_SpawnSavedObjectsAndCreatures;
+        On.SaveState.SaveToString += SaveState_SaveToString;
     }
+
+
+    private static string SaveState_SaveToString(On.SaveState.orig_SaveToString orig, SaveState self)
+    {
+        string result = orig(self);
+        Plugin.Log("SaveState:", result);
+        return result;
+        
+    }
+
+
+
+
+    private static void SaveState_SpawnSavedObjectsAndCreatures(On.SaveState.orig_SpawnSavedObjectsAndCreatures orig, SaveState self, World world, WorldCoordinate atPos)
+    {
+        foreach (string obj in self.pendingObjects)
+        {
+            Plugin.Log("pending object:", obj);
+        }
+        foreach (string obj in self.unrecognizedSaveStrings)
+        {
+            Plugin.Log("unrecognized SaveStrings:", obj);
+        }
+        orig(self, world, atPos);
+        
+    }
+
+
 
 
     private static bool AbstractPhysicalObject_UsesAPersistantTracker(On.AbstractPhysicalObject.orig_UsesAPersistantTracker orig, AbstractPhysicalObject abs)
@@ -35,93 +74,28 @@ internal static class OxygenMaskModules
 
 
 
-
-    // 上一次改这个函数忘了写orig(self)，导致我的矛大师一开局就在陆游，水猫到了五卵石那发现没有电池。
-    private static void MSCRoomSpecificScript_AddRoomSpecificScript(On.MoreSlugcats.MSCRoomSpecificScript.orig_AddRoomSpecificScript orig, Room room)
+    // TODO: 我猜测这东西会在我每次回到这儿的时候都生成一个面具，所以得使用dp
+    // 他妈的 有没有人能告诉我为什么他一realize就生成两个
+    // 原来是plugin那里Apply()调用了两次（擦汗
+    private static void Room_Loaded(On.Room.orig_Loaded orig, Room self)
     {
-        string name = room.abstractRoom.name;
-
-        if (name == "SS_AI" && room.game.IsStorySession && room.game.GetStorySession.saveState.saveStateNumber == Plugin.SlugcatStatsName)
+        orig(self);
+        if (self.abstractRoom.name == "SS_AI" && self.game.IsStorySession && self.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName)
         {
-            Plugin.Log("AddRoomSpecificScript: OxygenMask");
-            room.AddObject(new PlaceOxygenMask(room));
+            Plugin.Log("Add OxygenMask");
+
+            AbstractPhysicalObject abstr = new OxygenMaskAbstract(self.game.world, new WorldCoordinate(self.abstractRoom.index, -1, -1, 0), self.game.GetNewID());
+            abstr.destroyOnAbstraction = true;
+            self.abstractRoom.AddEntity(abstr);
+            abstr.RealizeInRoom();
+            (abstr.realizedObject as OxygenMask).firstChunk.pos = new Vector2(300f, 300f);
+            // room.AddObject(new PlaceOxygenMask(room));
         }
-        orig(room);
     }
 
 
 
 
-
-
-
-    // 这和放电池的流程完全一致，进行一个复制粘贴
-    // 那么问题来了，，我要是想防止玩家每次来到这个地方他都会刷新一个新的氧气面罩，那我是不是还得改deathpersistentdata（汗
-    // 躲得过初一，躲不过十五啊，，，
-    public class PlaceOxygenMask : UpdatableAndDeletable
-    {
-        private OxygenMask myMask;
-        private int timer;
-        public PlaceOxygenMask(Room room)
-        {
-            timer = 0;
-            this.room = room;
-        }
-
-
-
-        public override void Update(bool eu)
-        {
-
-            Plugin.Log("update");
-            base.Update(eu);
-            Vector2 vector = new(300f, 300f);
-            if (timer == 10 && room.game.session is StoryGameSession && myMask == null)
-            {
-                AbstractPhysicalObject abstr = new OxygenMaskAbstract(room.game.world, new WorldCoordinate(room.abstractRoom.index, -1, -1, 0), room.game.GetNewID());
-                abstr.destroyOnAbstraction = true;
-                this.room.abstractRoom.AddEntity(abstr);
-                abstr.RealizeInRoom();
-                this.myMask = (abstr.realizedObject as OxygenMask);
-                this.myMask.firstChunk.pos = vector;
-            }
-            timer++;
-
-            if (timer == 20)
-            {
-                foreach (var obj in room.physicalObjects)
-                {
-                    foreach (var obj2 in obj)
-                    {
-                        Plugin.Log("physicalObj:", obj2.GetType().Name);
-                    }
-                }
-                Destroy();
-            }
-        }
-
-        public void ReloadRooms()
-        {
-            for (int i = this.room.world.activeRooms.Count - 1; i >= 0; i--)
-            {
-                if (this.room.world.activeRooms[i] != this.room.game.cameras[0].room)
-                {
-                    if (this.room.game.roomRealizer != null)
-                    {
-                        this.room.game.roomRealizer.KillRoom(this.room.world.activeRooms[i].abstractRoom);
-                    }
-                    else
-                    {
-                        this.room.world.activeRooms[i].abstractRoom.Abstractize();
-                    }
-                }
-            }
-        }
-
-        
-
-
-    }
 
 
 
@@ -184,6 +158,7 @@ internal static class OxygenMaskModules
         {
             base.Update(eu);
             
+            
             ChangeCollisionLayer(grabbedBy.Count == 0 ? 2 : 1);
             firstChunk.collideWithTerrain = grabbedBy.Count == 0;
             firstChunk.collideWithSlopes = grabbedBy.Count == 0;
@@ -192,17 +167,24 @@ internal static class OxygenMaskModules
                 this.room.AddObject(new Bubble(base.firstChunk.pos, base.firstChunk.vel, false, false));
             }
 
-            
+            // Plugin.Log("o pos:", firstChunk.pos);
             if (grabbedBy.Count > 0 && grabbedBy[0].grabber != null && grabbedBy[0].grabber is Player)
             {
-                /*Player p = grabbedBy[0].grabber as Player;
-                lastAirInLungs = AirInLungs;
-                AirInLungs = p.airInLungs;
-                Plugin.Log("AirInLungs:", lastAirInLungs, AirInLungs, "COUNT:", timer);
-                if (lastAirInLungs > AirInLungs && timer < Abstr.lungCapacityBonus)
+                if (this.room != null && room.game.IsStorySession)
                 {
-                    p.airInLungs = lastAirInLungs;
-                }*/
+                    /*Plugin.Log("1", room.game.GetStorySession.saveState.miscWorldSaveData.pebblesEnergyTaken);
+                    Plugin.Log("2", room.game.GetStorySession.lastEverMetPebbles);
+                    Plugin.Log("3", room.game.GetStorySession.saveState.miscWorldSaveData.SSaiConversationsHad);*/
+                    if (room.game.GetStorySession.saveState.miscWorldSaveData.SSaiConversationsHad <= 0)
+                    {
+                        room.game.GetStorySession.saveState.miscWorldSaveData.SSaiConversationsHad += 1;
+                    }
+                    if (!room.game.GetStorySession.lastEverMetPebbles)
+                    {
+                        room.game.GetStorySession.lastEverMetPebbles = true;
+                    }
+                }
+
                 if (count == Abstr.lungCapacityBonus)
                 {
                     count = 0;
@@ -260,6 +242,15 @@ internal static class OxygenMaskModules
             }
         }
 
+        public override void Destroy()
+        {
+            base.Destroy();
+            if (Abstr.realizedObject != null)
+            {
+                Abstr.realizedObject = null;
+            }
+        }
+
     }
 
 
@@ -273,7 +264,6 @@ internal static class OxygenMaskModules
 
     #region Abstract
 
-    // 我想的是，数字是几就可以提供几倍的肺活量，但实测下来发现肯定不到，所以狠狠加大力度（
     public class OxygenMaskAbstract : AbstractPhysicalObject
     {
         public int lungCapacityBonus;
@@ -286,7 +276,10 @@ internal static class OxygenMaskModules
         {
             base.Realize();
             if (realizedObject == null)
+            {
                 realizedObject = new OxygenMask(this);
+            }
+                
         }
         public override string ToString()
         {

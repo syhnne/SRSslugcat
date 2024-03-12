@@ -26,9 +26,26 @@ namespace SRSslugcat;
 /// </summary>
 
 internal class SSRoomEffects
-
-
 {
+
+    public static void Disable()
+    {
+        On.GravityDisruptor.Update -= GravityDisruptor_Update;
+        On.CoralBrain.SSMusicTrigger.Trigger -= CoralBrain_SSMusicTrigger_Trigger;
+        On.SSOracleBehavior.ctor -= SSOracleBehavior_ctor;
+        On.ZapCoil.Update -= ZapCoil_Update;
+        On.ZapCoilLight.Update -= ZapCoilLight_Update;
+        On.AbstractRoom.RealizeRoom -= AbstractRoom_RealizeRoom;
+        On.SSLightRod.Update -= SSLightRod_Update;
+        On.Room.Loaded -= Room_Loaded;
+        On.SSOracleBehavior.UnconciousUpdate -= SSOracleBehavior_UnconciousUpdate;
+        On.Oracle.SetUpMarbles -= Oracle_SetUpMarbles;
+        // On.Oracle.ctor -= Oracle_ctor;
+
+
+
+    }
+
     public static void Apply()
     {
         On.GravityDisruptor.Update += GravityDisruptor_Update;

@@ -51,12 +51,45 @@ class Plugin : BaseUnityPlugin
     internal static readonly bool ShowLogs = true;
     public Options option;
     public static bool DevMode = true;
-    internal static readonly Color spearColor = new Color(1f, 0.2f, 0.1f);
-    internal static readonly Color32 bodyColor = new Color32(255, 207, 88, 255);
-    internal static readonly List<int> ColoredBodyParts = new List<int>() { 2, 3, };
+    
+
+
+    public void OnDisable()
+    {
+        try
+        {
+            On.Player.Update -= Player_Update;
+            On.Player.ctor -= Player_ctor;
+            On.Player.LungUpdate -= Player_LungUpdate;
+            On.Player.IsObjectThrowable -= Player_IsObjectThrowable;
+
+            On.World.GetNode -= World_GetNode;
+
+            
+            On.RainWorld.OnModsInit -= Extras.WrapInit(LoadResources);
+            PlayerHooks.Disable();
+            CustomPlayerGraphics.Disable();
+            SSRoomEffects.Disable();
+            SLOracleHooks.Disable();
+            OxygenMaskModules.Disable();
+            CustomLore.Disable();
+
+            instance = null;
+            option = null;
 
 
 
+
+
+
+
+
+        }
+        catch (Exception ex)
+        {
+            base.Logger.LogError(ex);
+        }
+    }
     public void OnEnable()
     {
         try
@@ -69,6 +102,8 @@ class Plugin : BaseUnityPlugin
             SSRoomEffects.Apply();
             SLOracleHooks.Apply();
             OxygenMaskModules.Apply();
+            CustomLore.Apply();
+            
 
 
             On.Player.Update += Player_Update;
@@ -79,8 +114,14 @@ class Plugin : BaseUnityPlugin
             On.World.GetNode += World_GetNode;
 
 
-
-
+            if (!Futile.atlasManager.DoesContainElementWithName("srs_tail"))
+            {
+                Futile.atlasManager.LoadAtlas("atlases/tail");
+            }
+            if (!Futile.atlasManager.DoesContainElementWithName("srs_HeadA0"))
+            {
+                Futile.atlasManager.LoadAtlas("atlases/head");
+            }
 
         }
         catch (Exception ex)
@@ -98,16 +139,11 @@ class Plugin : BaseUnityPlugin
         {
             MachineConnector.SetRegisteredOI("syhnne.SRSslugcat", this.option);
 
-            bool isInit = IsInit;
-            if (!isInit)
-            {
-                LogStat("INIT");
-                IsInit = true;
-                // Futile.atlasManager.LoadAtlas("atlases/headset");
-                Futile.atlasManager.LoadAtlas("atlases/head");
-                Futile.atlasManager.LoadAtlas("atlases/tail");
-                // Futile.atlasManager.LogAllElementNames();
-            }
+            LogStat("INIT");
+            // Futile.atlasManager.LoadAtlas("atlases/headset");
+            
+            
+            // Futile.atlasManager.LogAllElementNames();
         }
         catch (Exception ex)
         {
@@ -244,7 +280,7 @@ class Plugin : BaseUnityPlugin
             }
         }
         // 咋说，这玩意儿应该不能被放在肚子里，这很奇怪（
-        if (player.objectInStomach is OxygenMaskModules.OxygenMaskAbstract) { return; }
+        // if (player.objectInStomach is OxygenMaskModules.OxygenMaskAbstract) { return; }
 
         Plugin.Log("waterdeath");
         Vector2 vector = Vector2.Lerp(player.firstChunk.pos, player.firstChunk.lastPos, 0.35f);

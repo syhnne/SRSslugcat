@@ -38,6 +38,8 @@ using IL.Menu;
 
 
 
+
+
 namespace SRSslugcat;
 
 
@@ -47,6 +49,26 @@ namespace SRSslugcat;
 internal class CustomPlayerGraphics
 {
 
+
+    internal static readonly Color spearColor = new Color(1f, 0.2f, 0.1f);
+    internal static readonly Color32 bodyColor = new Color32(255, 207, 88, 255);
+    internal static readonly List<int> ColoredBodyParts = new List<int>() { 2, 3, };
+
+
+    public static void Disable()
+    {
+        On.PlayerGraphics.ctor -= PlayerGraphics_ctor;
+
+        On.PlayerGraphics.InitiateSprites -= InitiateSprites;
+        On.PlayerGraphics.AddToContainer -= AddToContainer;
+        On.PlayerGraphics.DrawSprites -= DrawSprites;
+        On.PlayerGraphics.TailSpeckles.DrawSprites -= TailSpecks_DrawSprites;
+        On.PlayerGraphics.ApplyPalette -= ApplyPalette;
+
+        On.PlayerGraphics.ColoredBodyPartList -= ColoredBodyPartList;
+        On.PlayerGraphics.DefaultBodyPartColorHex -= DefaultBodyPartColorHex;
+
+    }
 
     public static void Apply()
     {
@@ -77,13 +99,13 @@ internal class CustomPlayerGraphics
         {
             for (int i = 0; i < 12; i++)
             {
-                if (Plugin.ColoredBodyParts.Contains(i))
+                if (ColoredBodyParts.Contains(i))
                 {
                     sLeaser.sprites[i].color = new Color(1f, 1f, 1f);
                 }
                 else
                 {
-                    sLeaser.sprites[i].color = Plugin.bodyColor;
+                    sLeaser.sprites[i].color = bodyColor;
                 }
             }
         }
@@ -155,8 +177,8 @@ internal class CustomPlayerGraphics
                 self.tail[0] = new TailSegment(self, 7f, 4f, null, 0.85f, 1f, 1f, true);
                 self.tail[1] = new TailSegment(self, 6f, 7f, self.tail[0], 0.85f, 1f, 0.5f, true);
                 self.tail[2] = new TailSegment(self, 4f, 7f, self.tail[1], 0.85f, 1f, 0.5f, true);
-                self.tail[3] = new TailSegment(self, 2f, 7f, self.tail[2], 0.85f, 1f, 0.5f, true);
-                self.tail.Append(new TailSegment(self, 1.5f, 5f, self.tail[3], 0.85f, 1f, 0.5f, true));
+                self.tail[3] = new TailSegment(self, 3.5f, 7f, self.tail[2], 0.85f, 1f, 0.5f, true);
+                self.tail.Append(new TailSegment(self, 2f, 5f, self.tail[3], 0.85f, 1f, 0.5f, true));
             }
 
 
@@ -215,9 +237,24 @@ internal class CustomPlayerGraphics
             new TriangleMesh.Triangle(10, 11, 12),
             new TriangleMesh.Triangle(11, 12, 13)
             };
-            TriangleMesh triangleMesh = new TriangleMesh("srs_tail", tris, false, false);
+            TriangleMesh triangleMesh;
+            if (Futile.atlasManager.DoesContainElementWithName("srs_tail"))
+            {
+                triangleMesh = new TriangleMesh("srs_tail", tris, false, false);
+            }
+            else
+            {
+                triangleMesh = new TriangleMesh("Futile_White", tris, false, false);
+            }
             sLeaser.sprites[2] = triangleMesh;
-            sLeaser.sprites[3] = new FSprite("srs_HeadA0", true);
+            if (Futile.atlasManager.DoesContainElementWithName("srs_HeadA0"))
+            {
+                sLeaser.sprites[3] = new FSprite("srs_HeadA0", true);
+            }
+            else
+            {
+                sLeaser.sprites[3] = new FSprite("HeadA0", true);
+            }
             sLeaser.sprites[4] = new FSprite("LegsA0", true);
             sLeaser.sprites[4].anchorY = 0.25f;
             sLeaser.sprites[5] = new FSprite("PlayerArm0", true);
@@ -270,18 +307,19 @@ internal class CustomPlayerGraphics
             // self.tailSpecks.AddToContainer(sLeaser, rCam, rCam.ReturnFContainer("Midground"));
 
             sLeaser.RemoveAllSpritesFromContainer();
-            if (newContatiner == null)
-            {
-                newContatiner = rCam.ReturnFContainer("Midground");
-            }
+            newContatiner ??= rCam.ReturnFContainer("Midground");
             for (int i = 0; i < sLeaser.sprites.Length; i++)
             {
-                if (ModManager.MSC && i == self.gownIndex)
+                if (i >= self.tailSpecks.startSprite && i < self.tailSpecks.startSprite + self.tailSpecks.numberOfSprites)
+                {
+                    rCam.ReturnFContainer("Midground").AddChild(sLeaser.sprites[i]);
+                }
+                else if (i == self.gownIndex)
                 {
                     newContatiner = rCam.ReturnFContainer("Items");
                     newContatiner.AddChild(sLeaser.sprites[i]);
                 }
-                else if (ModManager.MSC)
+                else
                 {
                     if (i < 12)
                     {
@@ -296,18 +334,7 @@ internal class CustomPlayerGraphics
                         }
                     }
                 }
-                else if ((i > 6 && i < 9) || i > 9)
-                {
-                    rCam.ReturnFContainer("Foreground").AddChild(sLeaser.sprites[i]);
-                }
-                else if (i >= 13)
-                {
-                    rCam.ReturnFContainer("Foreground").AddChild(sLeaser.sprites[i]);
-                }
-                else
-                {
-                    newContatiner.AddChild(sLeaser.sprites[i]);
-                }
+
             }
 
         }
@@ -328,15 +355,13 @@ internal class CustomPlayerGraphics
             self.tailSpecks.DrawSprites(sLeaser, rCam, timeStacker, camPos);
             for (int i = 0; i < sLeaser.sprites.Length; i++)
             {
-                if (sLeaser.sprites[i].element.name.StartsWith(sLeaser.sprites[i].element.name))
+                if (Futile.atlasManager.DoesContainElementWithName("srs_" + sLeaser.sprites[i].element.name))
                 {
-                    if (Futile.atlasManager.DoesContainElementWithName("srs_" + sLeaser.sprites[i].element.name))
-                    {
-                        sLeaser.sprites[i].element = Futile.atlasManager.GetElementWithName(sLeaser.sprites[i].element.name.Replace(sLeaser.sprites[i].element.name, "srs_" + sLeaser.sprites[i].element.name));
-                    }
-
+                    sLeaser.sprites[i].element = Futile.atlasManager.GetElementWithName(sLeaser.sprites[i].element.name.Replace(sLeaser.sprites[i].element.name, "srs_" + sLeaser.sprites[i].element.name));
                 }
             }
+
+
         }
         
     }
@@ -349,15 +374,38 @@ internal class CustomPlayerGraphics
     private static void TailSpecks_DrawSprites(On.PlayerGraphics.TailSpeckles.orig_DrawSprites orig, PlayerGraphics.TailSpeckles self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
     {
         orig(self, sLeaser, rCam, timeStacker, camPos);
-        if (self.pGraphics.player.slugcatStats.name == Plugin.SlugcatStatsName)
+        if (self.pGraphics.player.SlugCatClass == Plugin.SlugcatStatsName)
         {
             for (int i = 0; i < self.rows; i++)
             {
                 for (int j = 0; j < self.lines; j++)
                 {
-                    sLeaser.sprites[self.startSprite + i * self.lines + j].color = Plugin.spearColor;
+                    sLeaser.sprites[self.startSprite + i * self.lines + j].color = spearColor;
+                    sLeaser.sprites[self.startSprite + i * self.lines + j].alpha = 0.7f;
+
+                    if (i == self.spearRow && j == self.spearLine)
+                    {
+                        if (ModManager.CoopAvailable && self.pGraphics.player.IsJollyPlayer)
+                        {
+                            sLeaser.sprites[self.startSprite + self.lines * self.rows].color = PlayerGraphics.JollyColor(self.pGraphics.player.playerState.playerNumber, 2);
+                        }
+                        else if (PlayerGraphics.CustomColorsEnabled())
+                        {
+                            sLeaser.sprites[self.startSprite + self.lines * self.rows].color = PlayerGraphics.CustomColorSafety(2);
+                        }
+                        else if (self.pGraphics.player.Malnourished)
+                        {
+                            sLeaser.sprites[self.startSprite + self.lines * self.rows].color = Color.white;
+                        }
+                        else
+                        {
+                            sLeaser.sprites[self.startSprite + self.lines * self.rows].color = spearColor;
+                        }
+
+                    }
                 }
             }
+
             
         }
     }

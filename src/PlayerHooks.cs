@@ -93,15 +93,37 @@ internal class PlayerHooks
 
 
 
+    internal static void Disable()
+    {
+        On.HUD.HUD.InitSinglePlayerHud -= HUD_InitSinglePlayerHud;
+        IL.Player.GrabUpdate -= Player_GrabUpdate;
+        On.Player.BiteEdibleObject -= Player_BiteEdibleObject;
+        On.Player.Destroy -= Player_Destroy;
+        On.Player.Die -= Player_Die;
+        On.Player.CanBeSwallowed -= Player_CanBeSwallowed;
+        On.Player.ObjectCountsAsFood -= Player_ObjectCountsAsFood;
+        On.Player.NewRoom -= Player_NewRoom;
+        On.Player.Jump -= Player_Jump;
+        On.Player.MovementUpdate -= Player_MovementUpdate;
+        On.Player.CanIPickThisUp -= Player_CanIPickThisUp;
+
+        On.Player.ClassMechanicsSpearmaster -= Player_ClassMechanicsSpearmaster;
+        On.Player.Grabability -= Player_Grabability;
+        On.Spear.Spear_NeedleCanFeed -= Spear_NeedleCanFeed;
+        On.Spear.HitSomething -= Spear_HitSomething;
+        On.Spear.DrawSprites -= Spear_DrawSprites;
+        On.PlayerGraphics.TailSpeckles.setSpearProgress -= TailSpeckles_setSpearProgress;
+
+    }
 
 
 
 
-
-    internal static void Apply()
+    public static void Apply()
     {
         On.HUD.HUD.InitSinglePlayerHud += HUD_InitSinglePlayerHud;
         IL.Player.GrabUpdate += Player_GrabUpdate;
+        On.Player.BiteEdibleObject += Player_BiteEdibleObject;
         On.Player.Destroy += Player_Destroy;
         On.Player.Die += Player_Die;
         On.Player.CanBeSwallowed += Player_CanBeSwallowed;
@@ -189,7 +211,7 @@ internal class PlayerHooks
             }
             else
             {
-                sLeaser.sprites[0].color = Color.Lerp(Plugin.spearColor, self.color, 1f - num);
+                sLeaser.sprites[0].color = Color.Lerp(CustomPlayerGraphics.spearColor, self.color, 1f - num);
             }
         }
     }
@@ -199,6 +221,7 @@ internal class PlayerHooks
 
 
     // 使被击中的生物当场去世
+    // 经测试，这不包括利维坦，因为利维坦能抗下好几发这种99倍的伤害
     private static bool Spear_HitSomething(On.Spear.orig_HitSomething orig, Spear self, SharedPhysics.CollisionResult result, bool eu)
     {
         bool die = false;
@@ -210,16 +233,28 @@ internal class PlayerHooks
             die = true;
         }
 
+        // 写完这些代码大概两周以后，我才想起来他有嘴，吃爆米花不用只吃五个。。
+        if (self.Spear_NeedleCanFeed() && result.obj is SeedCob
+            && self.thrownBy is Player && (self.thrownBy as Player).slugcatStats.name == Plugin.SlugcatStatsName)
+        {
+            (self.thrownBy as Player).AddFood(8);
+        }
+
         bool res = orig(self, result, eu);
+
+        
+
         if (die)
         {
-            Plugin.Log("creature instant death:", (result.obj as Creature).GetType().ToString());
+            // Plugin.Log("creature instant death:", (result.obj as Creature).GetType().ToString());
             (result.obj as Creature).Violence(self.firstChunk, new Vector2?(self.firstChunk.vel * self.firstChunk.mass * 2f), result.chunk, result.onAppendagePos, Creature.DamageType.Stab, 99f, 20f);
 
             /*(result.obj as Creature).Die();
             (result.obj as Creature).SetKillTag(self.thrownBy.abstractCreature);*/
         }
         return res;
+
+        
     }
 
 
@@ -269,7 +304,7 @@ internal class PlayerHooks
 
         if ((self.graphicsModule as PlayerGraphics).tailSpecks == null) 
         {
-            Plugin.Log("ERROR: tailSpecks not found");
+            Plugin.Log("tailSpecks not found !!!");
             return;
         }
 
@@ -497,6 +532,17 @@ internal class PlayerHooks
             bool isMyStory = newRoom.game.session is StoryGameSession && newRoom.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName;
             module.gravityController.NewRoom(isMyStory);
         }
+
+        if (!Plugin.DevMode) return;
+        Plugin.Log("NewRoom:", newRoom.abstractRoom.name);
+        foreach (var obj in newRoom.physicalObjects)
+        {
+            foreach (var obj2 in obj)
+            {
+                Plugin.Log("physicalObj:", obj2.GetType().Name);
+            }
+        }
+
     }
 
 
@@ -504,6 +550,33 @@ internal class PlayerHooks
 
 
     // 以下都是有关不能吃神经元
+
+
+    private static void Player_BiteEdibleObject(On.Player.orig_BiteEdibleObject orig, Player self, bool eu)
+    {
+        if (self.slugcatStats.name == Plugin.SlugcatStatsName && self.grasps[0] != null && self.grasps[1] != null
+            && (self.grasps[0].grabbed is SSOracleSwarmer || self.grasps[0].grabbed is SLOracleSwarmer) && self.grasps[1].grabbed is IPlayerEdible)
+        {
+            if ((self.grasps[1].grabbed as IPlayerEdible).BitesLeft == 1 && self.SessionRecord != null)
+            {
+                self.SessionRecord.AddEat(self.grasps[1].grabbed);
+            }
+            if (self.grasps[1].grabbed is Creature)
+            {
+                (self.grasps[1].grabbed as Creature).SetKillTag(self.abstractCreature);
+            }
+            if (self.graphicsModule != null)
+            {
+                (self.graphicsModule as PlayerGraphics).BiteFly(1);
+            }
+            (self.grasps[1].grabbed as IPlayerEdible).BitByPlayer(self.grasps[1], eu);
+            return;
+        }
+        else { orig(self, eu); }
+
+    }
+
+
     private static bool Player_CanBeSwallowed(On.Player.orig_CanBeSwallowed orig, Player self, PhysicalObject testObj)
     {
         if (self.slugcatStats.name.value == Plugin.SlugcatName)
@@ -625,7 +698,7 @@ internal class PlayerHooks
     private static bool SLOracleSwarmer_Edible(orig_SLOracleSwarmerEdible orig, SLOracleSwarmer self)
     {
         var result = orig(self);
-        if (self.grabbedBy[0] != null && self.grabbedBy[0].grabber is Player && (self.grabbedBy[0].grabber as Player).slugcatStats.name == Plugin.SlugcatStatsName)
+        if (self.grabbedBy.Count > 0 && self.grabbedBy[0] != null && self.grabbedBy[0].grabber is Player && (self.grabbedBy[0].grabber as Player).slugcatStats.name == Plugin.SlugcatStatsName)
         {
             result = false;
         }
@@ -638,7 +711,7 @@ internal class PlayerHooks
     private static bool SSOracleSwarmer_Edible(orig_SSOracleSwarmerEdible orig, SSOracleSwarmer self)
     {
         var result = orig(self);
-        if (self.grabbedBy[0] != null && self.grabbedBy[0].grabber is Player && (self.grabbedBy[0].grabber as Player).slugcatStats.name == Plugin.SlugcatStatsName)
+        if (self.grabbedBy.Count > 0 && self.grabbedBy[0] != null && self.grabbedBy[0].grabber is Player && (self.grabbedBy[0].grabber as Player).slugcatStats.name == Plugin.SlugcatStatsName)
         {
             result = false;
         }
