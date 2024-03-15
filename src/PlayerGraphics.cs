@@ -240,6 +240,7 @@ internal class CustomPlayerGraphics
             TriangleMesh triangleMesh;
             if (Futile.atlasManager.DoesContainElementWithName("srs_tail"))
             {
+                Plugin.Log("sprite srs_tail NOT FOUND");
                 triangleMesh = new TriangleMesh("srs_tail", tris, false, false);
             }
             else
@@ -253,6 +254,7 @@ internal class CustomPlayerGraphics
             }
             else
             {
+                Plugin.Log("sprite srs_HeadA0 NOT FOUND");
                 sLeaser.sprites[3] = new FSprite("HeadA0", true);
             }
             sLeaser.sprites[4] = new FSprite("LegsA0", true);
