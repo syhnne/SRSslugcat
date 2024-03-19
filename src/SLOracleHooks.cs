@@ -12,17 +12,17 @@ internal class SLOracleHooks
 
     public static void Disable()
     {
-        On.SLOracleBehaviorHasMark.MoonConversation.AddEvents -= MoonConversation_AddEvents;
+        On.SLOracleBehaviorHasMark.MoonConversation.AddEvents -= SLOracleBehaviorHasMark_MoonConversation_AddEvents;
     }
     public static void Apply()
     {
-        On.SLOracleBehaviorHasMark.MoonConversation.AddEvents += MoonConversation_AddEvents;
+        On.SLOracleBehaviorHasMark.MoonConversation.AddEvents += SLOracleBehaviorHasMark_MoonConversation_AddEvents;
     }
 
 
 
 
-    private static void MoonConversation_AddEvents(On.SLOracleBehaviorHasMark.MoonConversation.orig_AddEvents orig, SLOracleBehaviorHasMark.MoonConversation self)
+    private static void SLOracleBehaviorHasMark_MoonConversation_AddEvents(On.SLOracleBehaviorHasMark.MoonConversation.orig_AddEvents orig, SLOracleBehaviorHasMark.MoonConversation self)
     {
         if (self.myBehavior.oracle.room.game.IsStorySession && self.myBehavior.oracle.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName)
         {
@@ -68,13 +68,15 @@ internal class SLOracleHooks
 
                 }
             }
-
             // 多洗爹？？
             // TODO: 算了 先注释他 以后再思考这个咋写（。 
             /*else if (self.id == Conversation.ID.Moon_Misc_Item && self.describeItem is OxygenMaskModules.OxygenMaskMisc)
             {
 
             }*/
+            else { orig(self); }
+
+            
 
 
 

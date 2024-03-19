@@ -4,7 +4,7 @@
 	"version": "0.1.0",
 	"authors": "syhnne",
 	"description": "工作量变成原来的4倍了",
-	"requirements": [ "slime-cubed.slugbase", "moreslugcats", "fisobs" ],
-	"requirements_names": [ "SlugBase", "More Slugcats Expansion", "Fisobs" ],
+	"requirements": [ "slime-cubed.slugbase", "moreslugcats", "fisobs", "crs" ],
+	"requirements_names": [ "SlugBase", "More Slugcats Expansion", "Fisobs", "Custom Regions Support" ],
 	"tags": [ "Custom Slugcat" ]
 }

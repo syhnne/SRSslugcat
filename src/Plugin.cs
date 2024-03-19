@@ -50,7 +50,7 @@ class Plugin : BaseUnityPlugin
     internal bool IsInit;
     internal static readonly bool ShowLogs = true;
     public Options option;
-    public static bool DevMode = true;
+    public static bool DevMode = false;
     
 
 
@@ -116,16 +116,17 @@ class Plugin : BaseUnityPlugin
 
             if (!Futile.atlasManager.DoesContainElementWithName("srs_tail"))
             {
-                Futile.atlasManager.LoadAtlas("atlases/tail");
+                Futile.atlasManager.LoadAtlas("atlases/srs_tail");
             }
             if (!Futile.atlasManager.DoesContainElementWithName("srs_HeadA0"))
             {
-                Futile.atlasManager.LoadAtlas("atlases/head");
+                Futile.atlasManager.LoadAtlas("atlases/srs_head");
             }
 
         }
         catch (Exception ex)
         {
+            Debug.LogError(ex);
             base.Logger.LogError(ex);
         }
     }
@@ -248,7 +249,8 @@ class Plugin : BaseUnityPlugin
         if (self.room == null || self.dead || !getModule || self.slugcatStats.name != Plugin.SlugcatStatsName) return;
         bool isMyStory = self.room.game.IsStorySession && self.room.game.GetStorySession.saveStateNumber == Plugin.SlugcatStatsName;
 
-        if (!self.Malnourished && self.Submersion > 0.2f && self.room.abstractRoom.name != "SB_L01")
+        // 为了防止玩家发现虚空流体就是水这个事实（。
+        if (!self.Malnourished && self.Submersion > 0.2f && self.room.abstractRoom.name != "SB_L01" && self.room.abstractRoom.name != "FR_FINAL")
         {
             WaterDeath(self, self.room);
         }
@@ -274,9 +276,19 @@ class Plugin : BaseUnityPlugin
         if (player.dead) { return; }
         for (int i = 0; i < player.grasps.Length; i++)
         {
-            if (player.grasps[i] != null && player.grasps[i].grabbed is OxygenMaskModules.OxygenMask)
+            if (player.grasps[i] != null && (player.grasps[i].grabbed is OxygenMaskModules.OxygenMask))
             {
                 return;
+            }
+            else if (player.grasps[i] != null && player.grasps[i].grabbed is BubbleGrass) 
+            {
+                BubbleGrass bubbleGrass = player.grasps[i].grabbed as BubbleGrass;
+                Plugin.Log("bubbleGrass oxygen left:", bubbleGrass.AbstrBubbleGrass.oxygenLeft);
+                if (player.animation == Player.AnimationIndex.SurfaceSwim)
+                {
+                    bubbleGrass.AbstrBubbleGrass.oxygenLeft = Mathf.Max(0f, bubbleGrass.AbstrBubbleGrass.oxygenLeft - 0.0009090909f);
+                }
+                if (bubbleGrass.AbstrBubbleGrass.oxygenLeft > 0f) return;
             }
         }
         // 咋说，这玩意儿应该不能被放在肚子里，这很奇怪（

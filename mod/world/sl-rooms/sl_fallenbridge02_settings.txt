@@ -4,6 +4,8 @@ WaveAmplitude: 0.2173913
 SecondWaveLength: 0.1666667
 SecondWaveAmplitude: 0
 Clouds: 0.4891304
+RandomItemDensity: 0.2834695
+RandomItemSpearChance: 0.09946773
 Palette: 13
 EffectColorA: 6
 Effects: Fog-0.2934783-20-20, Darkness-0.08695652-0-0, Flies-0.1086956-37-125, 
